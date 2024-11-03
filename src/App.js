@@ -1,25 +1,30 @@
-import logo from './logo.svg';
+import { useEffect } from 'react';
 import './App.css';
+/* global chrome */
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  function getUserInfo() {
+    return new Promise((resolve, reject) => {
+      chrome.identity.getProfileUserInfo({ accountStatus: 'ANY' }, (userInfo) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError.message);
+        } else {
+          resolve(userInfo);
+        }
+      });
+    });
+  }
+
+  useEffect(() => {
+    getUserInfo()
+      .then((userInfo) => {
+        console.log(userInfo);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
+  return <div className="App w-1/2 h-1/2">Hello</div>;
 }
 
 export default App;
