@@ -1,7 +1,7 @@
 import React from 'react';
 
 
-const Welcome = (onSaveMyMBTI) => {
+const Welcome = ({onSaveMyMBTI}) => {
     const [mbti, setMbti] = React.useState('');
     return (
         <div>

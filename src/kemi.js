@@ -1,4 +1,4 @@
-const KEMI_VALUE = {
+export const KEMI_VALUE = {
     "ISTP": {
         "ESTJ": {
             "total": 4.7,
