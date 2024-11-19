@@ -17,5 +17,11 @@
     "48": "images/mbti-logo-48.png",
     "128": "images/mbti-logo.png"
   },
-  "permissions": ["identity", "identity.email", "storage"]
+  "permissions": ["identity", "identity.email", "storage"],
+  "web_accessible_resources": [
+    {
+      "resources": ["images/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

@@ -1,93 +1,97 @@
-import {useEffect, useState} from 'react';
-import './App.css';
-import {addFriends, getFriends, saveMyInfo} from "./API";
-import Welcome from "./components/welcome";
-import {getChromeUserInfo, getSyncUserInfo} from "./ChromeAPI";
-import AddFriends from "./components/AddFreinds";
+import { useEffect } from "react";
+import { getFriends, saveMyInfo } from "./API";
+import "./App.css";
+import { getChromeUserInfo } from "./ChromeAPI";
+
+import { getSyncUserInfo } from "./ChromeAPI";
+import FriendDetail from "./components/FriendDetail";
 import FriendList from "./components/FriendList";
-import {KEMI_VALUE} from "./kemi";
-import {PersonalityProfile} from "./components/KemiView";
+import Header from "./components/Header";
+import Welcome from "./components/welcome";
+import { useAppStore } from "./store/app.store";
+
+const MENUS = ["HOME", "KEMI_DETAIL", "ADD_FRIENDS"];
 
 function App() {
-    const [userInfo, setUserInfo] = useState(null);
-    const [friends, setFriends] = useState([]);
-    const [selectedFriend, setSelectedFriend] = useState(null);
+  const { userInfo, setUserInfo, setFriends, addFriends, currentMenu } =
+    useAppStore();
 
-    async function findMyInfo() {
+  console.log("CURRENT MENU", currentMenu);
+  console.log("USER_INFO", userInfo);
 
-        const syncData = await getSyncUserInfo()
-
-        if (syncData) {
-            setUserInfo(syncData);
-        } else {
-            const chromeUserInfo = await getChromeUserInfo();
-            console.log("CHROME USER INFO", chromeUserInfo);
-            setUserInfo(chromeUserInfo);
-        }
+  async function findMyInfo() {
+    const syncData = await getSyncUserInfo();
+    if (syncData) {
+      console.log("SYNC DATA", syncData);
+      setUserInfo(syncData);
+    } else {
+      const chromeUserInfo = await getChromeUserInfo();
+      console.log("CHROME USER INFO", chromeUserInfo);
+      setUserInfo(chromeUserInfo);
     }
+  }
 
+  useEffect(() => {
+    findMyInfo().catch((err) => {
+      console.error(err);
+    });
+  }, []);
 
-    useEffect(() => {
-        findMyInfo().catch(err=>{
-            console.error(err);
+  useEffect(() => {
+    if (userInfo && userInfo?.mbti) {
+      getFriends(userInfo.user_id)
+        .then((data) => {
+          console.log("GET FRIENDS", data);
+          setFriends(data);
+        })
+        .catch((error) => {
+          console.error(error);
         });
-    }, []);
+    }
+  }, [userInfo]);
 
-    useEffect(() => {
-        if(userInfo && userInfo?.mbti) {
-            console.log("USER INFO", userInfo);
-            getFriends(userInfo.user_id).then((data) => {
-                setFriends(data)
-            }).catch((error) => {
-                console.error(error);
-            });
-        }
-    }, [userInfo]);
-
-
-    if(!userInfo?.mbti){
-        return <Welcome onSaveMyMBTI={(mbti) => {
+  function renderContent() {
+    if (!userInfo?.mbti) {
+      return (
+        <Welcome
+          onSaveMyMBTI={(mbti) => {
             console.log("SAVE MY MBTI", userInfo, mbti);
-            saveMyInfo(userInfo, mbti).then((data) => {
+            saveMyInfo(userInfo, mbti)
+              .then((data) => {
                 console.log("SAVE MY INFO", data);
                 setUserInfo(data);
-            }).catch((error) => {
+              })
+              .catch((error) => {
                 console.error(error);
-            });
-        }}></Welcome>
+              });
+          }}
+        />
+      );
     }
 
-    if(selectedFriend){
-        return <div>
-            <h1>{selectedFriend.name}</h1>
-            <h2>{selectedFriend.mbti}</h2>
-           <h3>KEMI</h3>
-            <PersonalityProfile data={KEMI_VALUE[selectedFriend.mbti][userInfo.mbti]}></PersonalityProfile>
-            <button onClick={()=>{
-                setSelectedFriend(null);
-            }}>Back</button>
-        </div>
+    if (currentMenu === "HOME") {
+      return <FriendList />;
+    } else if (currentMenu === "KEMI_DETAIL") {
+      return <FriendDetail />;
+    } else if (currentMenu === "ADD_FRIENDS") {
+      return (
+        <AddFriends
+          onAddFriends={(f) => {
+            addFriends(f);
+          }}
+        />
+      );
     }
+  }
 
-
-    return <div className="App ">
-        Hello
-        {(userInfo && userInfo?.mbti) && <div>
-            <h1>{userInfo.email}</h1>
-            <h2>{userInfo.mbti}</h2>
-            <AddFriends onAddFriends={(f=>{
-                addFriends(userInfo.user_id, f).then((data)=>{
-                    console.log("ADD FRIENDS", data);
-                }).catch((error)=>{
-                    console.error(error);
-                })
-            })}/>
-            <FriendList friends={friends} onSelectFriends={(friends)=>{
-                setSelectedFriend(friends);
-            }}/>
-        </div>
-        }
-    </div>;
+  return (
+    <div className="App overflow-auto">
+      <div className={"mb-4"}>
+        <Header />
+      </div>
+      <div className={"p-4 pt-0"}>{renderContent()}</div>
+    </div>
+  );
 }
 
 export default App;
